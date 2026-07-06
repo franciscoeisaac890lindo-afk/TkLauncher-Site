@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TkLauncher — Launcher moderno para Minecraft</title>
+  <meta name="description" content="TkLauncher - Minecraft Launcher" />
+  <style>
+    :root{
+      --bg-900:#0b0f13;
+      --bg-800:#0f1720;
+      --glass: rgba(255,255,255,0.04);
+      --glass-2: rgba(255,255,255,0.03);
+      --accent-1: linear-gradient(135deg,#7c3aed,#06b6d4);
+      --accent-2: linear-gradient(135deg,#06b6d4,#7c3aed);
+      --card:#0f1724;
+      --muted:#9aa4b2;
+      --glass-border: rgba(255,255,255,0.06);
+      --radius:14px;
+      --shadow-lg: 0 10px 30px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+      --glass-blur: 10px;
+      --accent-color: #7c3aed;
+    }
+
+    /* Reset and base */
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: radial-gradient(1200px 600px at 10% 20%, rgba(124,58,237,0.06), transparent 8%),
+                  radial-gradient(900px 400px at 90% 80%, rgba(6,182,212,0.04), transparent 8%),
+                  linear-gradient(180deg,var(--bg-900),var(--bg-800));
+      color:#e6eef8;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      scroll-behavior:smooth;
+      position:relative;
+      overflow-x:hidden;
+    }
+
+    /* Canvas overlay background */
+    #bg-canvas{
+      position:fixed;
+      inset:0;
+      z-index:0;
+      display:block;
+      filter:blur(6px) saturate(1.05);
+      opacity:0.9;
+      pointer-events:none;
+    }
+
+    /* Header */
+    header{
+      position:fixed;
+      top:16px;
+      left:50%;
+      transform:translateX(-50%);
+      width:calc(100% - 40px);
+      max-width:1100px;
+      z-index:50;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:10px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      border-radius:16px;
+      backdrop-filter: blur(var(--glass-blur));
+      border:1px solid var(--glass-border);
+      box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+    }
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{
+      width:44px;height:44px;border-radius:10px;
+      background:linear-gradient(135deg,#111827, #0b1220);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:700;color:transparent;
+      -webkit-text-stroke: 0.6px rgba(255,255,255,0.06);
+      position:relative;
+      overflow:hidden;
+    }
+    .logo::after{
+      content:"";position:absolute;inset:0;background:linear-gradient(120deg, rgba(124,58,237,0.18), rgba(6,182,212,0.14));
+      mix-blend-mode:screen;opacity:0.9;
+    }
+    .brand h1{font-size:16px;margin:0;letter-spacing:0.4px}
+    nav{display:flex;gap:18px;align-items:center}
+    nav a{
+      color:var(--muted);
+      text-decoration:none;
+      font-weight:600;
+      padding:8px 12px;border-radius:10px;
+      transition:all .28s cubic-bezier(.2,.9,.2,1);
+      font-size:14px;
+    }
+    nav a:hover{color:#fff;background:rgba(255,255,255,0.02);transform:translateY(-2px)}
+    .actions{display:flex;gap:10px;align-items:center}
+
+    /* Mobile menu */
+    .hamburger{
+      display:none;
+      width:44px;height:44px;border-radius:10px;border:1px solid var(--glass-border);
+      background:var(--glass);align-items:center;justify-content:center;cursor:pointer;
+    }
+    .hamburger span{display:block;width:18px;height:2px;background:#fff;border-radius:2px;position:relative}
+    .mobile-nav{display:none;position:absolute;top:70px;right:0;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:12px;border-radius:12px;border:1px solid var(--glass-border)}
+    .mobile-nav a{display:block;padding:10px 14px;color:var(--muted)}
+
+    /* Main container */
+    main{position:relative;z-index:10;max-width:1100px;margin:140px auto 60px;padding:24px;display:flex;flex-direction:column;gap:48px}
+
+    /* Hero */
+    .hero{
+      display:grid;grid-template-columns:1fr 420px;gap:28px;align-items:center;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:var(--radius);padding:32px;border:1px solid var(--glass-border);box-shadow:var(--shadow-lg);
+      backdrop-filter: blur(10px);
+      overflow:hidden;
+    }
+    .hero .kicker{color:var(--muted);font-weight:700;display:inline-block;margin-bottom:10px;padding:6px 10px;border-radius:999px;background:linear-gradient(90deg,rgba(124,58,237,0.12),rgba(6,182,212,0.08));}
+    .hero h2{margin:0;font-size:34px;line-height:1.02}
+    .hero p{color:var(--muted);margin-top:12px;font-size:15px}
+    .hero .cta{display:flex;gap:12px;margin-top:20px;align-items:center}
+    .btn{
+      background:var(--accent-1);border:0;padding:12px 18px;border-radius:12px;color:#fff;font-weight:700;cursor:pointer;
+      box-shadow: 0 8px 20px rgba(124,58,237,0.12);
+      transition:transform .22s ease, box-shadow .22s ease, opacity .18s;
+      display:inline-flex;gap:10px;align-items:center;font-size:15px;text-decoration:none;
+    }
+    .btn.secondary{
+      background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);backdrop-filter: blur(6px);
+    }
+    .btn:hover{transform:translateY(-4px);box-shadow: 0 18px 40px rgba(6,182,212,0.06)}
+    .hero-right{
+      display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:center;
+    }
+    .mock{
+      width:100%;height:320px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid var(--glass-border);
+      display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:700;position:relative;overflow:hidden;
+      box-shadow: 0 10px 30px rgba(2,6,23,0.6);
+    }
+    .mock img{max-width:100%;height:100%;object-fit:cover;border-radius:12px;display:block}
+
+    /* Features cards */
+    .features-grid{
+      display:grid;grid-template-columns:repeat(3,1fr);gap:18px;
+    }
+    .feature-card{
+      background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+      border-radius:12px;padding:16px;border:1px solid var(--glass-border);box-shadow: 0 8px 18px rgba(2,6,23,0.5);
+      transition:transform .35s cubic-bezier(.2,.9,.2,1), box-shadow .35s;
+      display:flex;gap:12px;align-items:flex-start;
+    }
+    .feature-card:hover{transform:translateY(-10px);box-shadow: 0 20px 40px rgba(2,6,23,0.7)}
+    .feature-icon{
+      width:56px;height:56px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+      background:linear-gradient(135deg, rgba(124,58,237,0.18), rgba(6,182,212,0.12));
+      font-weight:800;color:#fff;flex-shrink:0;
+      box-shadow: inset 0 -6px 18px rgba(2,6,23,0.45);
+    }
+    .feature-card h3{margin:0;font-size:15px}
+    .feature-card p{margin:6px 0 0;color:var(--muted);font-size:13px}
+
+    /* Screenshots gallery */
+    .gallery{
+      display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
+    }
+    .shot{
+      border-radius:12px;overflow:hidden;border:1px solid var(--glass-border);background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      transition:transform .28s, box-shadow .28s;cursor:pointer;
+    }
+    .shot:hover{transform:translateY(-8px);box-shadow:0 18px 40px rgba(2,6,23,0.6)}
+    .shot img{width:100%;height:220px;object-fit:cover;display:block}
+
+    /* Download highlight */
+    .download-hero{
+      background: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(6,182,212,0.06));
+      border-radius:14px;padding:28px;border:1px solid rgba(255,255,255,0.04);
+      display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
+    }
+    .download-hero .info{max-width:720px}
+    .download-hero h3{margin:0;font-size:20px}
+    .download-hero p{color:var(--muted);margin-top:8px}
+    .download-hero .cta{margin-top:0}
+
+    /* FAQ */
+    .faq{display:flex;flex-direction:column;gap:12px}
+    .faq-item{background:var(--glass);border-radius:12px;padding:12px;border:1px solid var(--glass-border);overflow:hidden;transition:all .28s}
+    .faq-q{display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-weight:700;color:#fff}
+    .faq-a{max-height:0;overflow:hidden;color:var(--muted);transition:max-height .38s ease;padding-top:0}
+    .faq-item.open .faq-a{padding-top:10px;max-height:240px}
+
+    /* Footer */
+    footer{
+      text-align:center;padding:28px;border-radius:12px;margin-top:8px;color:var(--muted);
+      display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;
+    }
+    .footer-links{display:flex;gap:12px;align-items:center}
+    .chip{padding:8px 12px;border-radius:999px;background:rgba(255,255,255,0.02);border:1px solid var(--glass-border);color:var(--muted);font-weight:600}
+
+    /* Back to top */
+    #back-to-top{position:fixed;right:22px;bottom:22px;background:linear-gradient(90deg,#7c3aed,#06b6d4);width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;border:0;box-shadow:0 12px 30px rgba(6,182,212,0.12);cursor:pointer;z-index:60;transform:translateY(0);opacity:0;visibility:hidden;transition:all .28s}
+    #back-to-top.show{opacity:1;visibility:visible;transform:translateY(0)}
+
+    /* Reveal animations */
+    .reveal{opacity:0;transform:translateY(18px);transition:all .7s cubic-bezier(.2,.9,.2,1)}
+    .reveal.revealed{opacity:1;transform:translateY(0)}
+
+    /* Responsive */
+    @media (max-width:1000px){
+      .hero{grid-template-columns:1fr; padding:22px}
+      .hero-right{order:2}
+      .hero .kicker{margin-top:2px}
+      .features-grid{grid-template-columns:repeat(2,1fr)}
+      .gallery{grid-template-columns:repeat(2,1fr)}
+      header{width:calc(100% - 24px);left:12px;transform:none}
+    }
+    @media (max-width:720px){
+      main{margin-top:120px;padding:16px}
+      .features-grid{grid-template-columns:1fr}
+      .gallery{grid-template-columns:1fr}
+      nav{display:none}
+      .hamburger{display:flex}
+      .mock{height:220px}
+      .hero{padding:18px}
+      .logo{width:40px;height:40px}
+    }
+    /* small helpers */
+    .muted{color:var(--muted);font-size:13px}
+    .small{font-size:13px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <!-- Canvas background for particles -->
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+
+  <header role="banner" aria-label="Cabeçalho principal">
+    <div class="brand" aria-hidden="false">
+      <div class="logo" aria-hidden="true"></div>
+      <div>
+        <h1>TkLauncher</h1>
+        <div class="small muted">Launcher moderno para Minecraft</div>
+      </div>
+    </div>
+
+    <nav role="navigation" aria-label="Menu principal">
+      <a href="#inicio">Início</a>
+      <a href="#recursos">Recursos</a>
+      <a href="#screenshots">Screenshots</a>
+      <a href="#download">Download</a>
+      <a href="https://github.com/franciscoeisaac890lindo-afk/TkLauncher" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+
+    <div class="actions">
+      <a class="btn" href="https://github.com/franciscoeisaac890lindo-afk/TkLauncher/releases" target="_blank" rel="noopener">
+        ⬇ Download
+      </a>
+      <button class="hamburger" id="hamburger" aria-label="Abrir menu">
+        <span></span>
+      </button>
+      <div class="mobile-nav" id="mobileNav" aria-hidden="true">
+        <a href="#inicio">Início</a>
+        <a href="#recursos">Recursos</a>
+        <a href="#screenshots">Screenshots</a>
+        <a href="#download">Download</a>
+        <a href="https://github.com/franciscoeisaac890lindo-afk/TkLauncher" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <section id="inicio" class="hero reveal" aria-labelledby="hero-title">
+      <div>
+        <div class="kicker">TkLauncher</div>
+        <h2 id="hero-title">Launcher moderno para Minecraft Java Edition</h2>
+        <p>Desenvolvido em Python utilizando CustomTkinter e minecraft-launcher-lib.</p>
+        <div class="cta">
+          <a class="btn" href="https://github.com/franciscoeisaac890lindo-afk/TkLauncher/releases" target="_blank" rel="noopener">
+            ⬇ Download
+          </a>
+          <a class="btn secondary" href="https://github.com/franciscoeisaac890lindo-afk/TkLauncher" target="_blank" rel="noopener">GitHub</a>
+        </div>
+
+        <div style="margin-top:22px;display:flex;gap:12px;flex-wrap:wrap">
+          <div class="chip">Gratuito</div>
+          <div class="chip">Compatível com Windows</div>
+          <div class="chip">Atualizações automáticas</div>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <div class="mock" aria-hidden="true" title="Mockup do launcher">
+          <!-- Placeholder image: substitua pela imagem real do launcher -->
+          <!-- Substitua o atributo src abaixo por: src="caminho/para/seu/screenshot.png" -->
+          <img src="data:image/svg+xml;utf8,
+            <svg xmlns='http://www.w3.org/2000/svg' width='720' height='420'>
+              <defs>
+                <linearGradient id='g' x1='0' x2='1'>
+                  <stop offset='0' stop-color='%237c3aed' stop-opacity='0.3'/>
+                  <stop offset='1' stop-color='%2306b6d4' stop-opacity='0.15'/>
+                </linearGradient>
+              </defs>
+              <rect rx='12' width='100%' height='100%' fill='%23101821'/>
+              <rect x='20' y='20' rx='8' width='calc(100% - 40)' height='calc(100% - 40)' fill='url(%23g)'/>
+              <text x='50%' y='50%' font-size='24' fill='%23ffffff' font-family='Arial' text-anchor='middle' dominant-baseline='middle'>Substitua por um screenshot do TkLauncher</text>
+            </svg>" alt="Placeholder do TkLauncher">
+        </div>
+
+        <div class="small muted" style="text-align:center">Interface moderna e intuitiva — exemplo do mockup</div>
+      </div>
+    </section>
+
+    <!-- Recursos -->
+    <section id="recursos" class="reveal">
+      <h2 style="margin:0 0 12px 0">Recursos</h2>
+      <div class="features-grid" aria-hidden="false">
+        <article class="feature-card">
+          <div class="feature-icon">MS</div>
+          <div>
+            <h3>Login Microsoft</h3>
+            <p>Autenticação segura via conta Microsoft (Xbox Live) para Minecraft Java.</p>
+          </div>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon">OF</div>
+          <div>
+            <h3>Login Offline</h3>
+            <p>Modo offline para jogar sem conexão usando perfis locais.</p>
+          </div>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon">DL</div>
+          <div>
+            <h3>Download automático</h3>
+            <p>Baixa automaticamente as versões selecionadas e bibliotecas necessárias.</p>
+          </div>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon">UI</div>
+          <div>
+            <h3>Interface moderna</h3>
+            <p>Construído com CustomTkinter: aparência limpa e responsiva.</p>
+          </div>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon">INST</div>
+          <div>
+            <h3>Instalação automática</h3>
+            <p>Instala arquivos e configurações sem intervenção complexa do usuário.</p>
+          </div>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon">UP</div>
+          <div>
+            <h3>Atualizações automáticas</h3>
+            <p>Mantenha seu launcher sempre na versão mais recente com um clique.</p>
+          </div>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon">PB</div>
+          <div>
+            <h3>Barra de progresso</h3>
+            <p>Acompanhamento visual do download e instalação em tempo real.</p>
+          </div>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon">VS</div>
+          <div>
+            <h3>Seleção de versões</h3>
+            <p>Escolha entre várias versões do Minecraft para jogar com facilidade.</p>
+          </div>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon">WIN</div>
+          <div>
+            <h3>Compatível com Windows</h3>
+            <p>Empacotado e testado no ambiente Windows para maior compatibilidade.</p>
+          </div>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon">PERS</div>
+          <div>
+            <h3>Personalização</h3>
+            <p>Opções para temas, perfil e configurações de inicialização.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- Screenshots -->
+    <section id="screenshots" class="reveal">
+      <h2 style="margin:0 0 12px 0">Screenshots</h2>
+      <p class="small muted" style="margin-top:0">Galeria de exemplo — substitua pelas imagens reais do TkLauncher.</p>
+      <div class="gallery">
+        <figure class="shot" title="Screenshot 1">
+          <!-- Placeholder: troque o src abaixo por: src="assets/screenshot1.png" -->
+          <img src="data:image/svg+xml;utf8,
+            <svg xmlns='http://www.w3.org/2000/svg' width='600' height='380'>
+              <rect rx='10' width='100%' height='100%' fill='%230f1724'/>
+              <text x='50%' y='50%' font-size='18' fill='%23cbd5e1' font-family='Arial' text-anchor='middle' dominant-baseline='middle'>Screenshot 1 - Substituir</text>
+            </svg>" alt="Screenshot 1">
+        </figure>
+
+        <figure class="shot" title="Screenshot 2">
+          <!-- Placeholder: troque o src abaixo por: src="assets/screenshot2.png" -->
+          <img src="data:image/svg+xml;utf8,
+            <svg xmlns='http://www.w3.org/2000/svg' width='600' height='380'>
+              <rect rx='10' width='100%' height='100%' fill='%23121624'/>
+              <text x='50%' y='50%' font-size='18' fill='%23cbd5e1' font-family='Arial' text-anchor='middle' dominant-baseline='middle'>Screenshot 2 - Substituir</text>
+            </svg>" alt="Screenshot 2">
+        </figure>
+
+        <figure class="shot" title="Screenshot 3">
+          <!-- Placeholder: troque o src abaixo por: src="assets/screenshot3.png" -->
+          <img src="data:image/svg+xml;utf8,
+            <svg xmlns='http://www.w3.org/2000/svg' width='600' height='380'>
+              <rect rx='10' width='100%' height='100%' fill='%230b1220'/>
+              <text x='50%' y='50%' font-size='18' fill='%23cbd5e1' font-family='Arial' text-anchor='middle' dominant-baseline='middle'>Screenshot 3 - Substituir</text>
+            </svg>" alt="Screenshot 3">
+        </figure>
+      </div>
+    </section>
+
+    <!-- Download Highlight -->
+    <section id="download" class="reveal">
+      <div class="download-hero">
+        <div class="info">
+          <h3>Baixe agora</h3>
+          <p class="small muted">Sempre utilize a versão mais recente disponível.</p>
+        </div>
+        <div class="cta">
+          <a class="btn" href="https://github.com/franciscoeisaac890lindo-afk/TkLauncher/releases" target="_blank" rel="noopener">Download da versão mais recente</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq" class="reveal">
+      <h2 style="margin:0 0 12px 0">FAQ</h2>
+      <div class="faq">
+        <div class="faq-item" aria-expanded="false">
+          <div class="faq-q">O launcher é gratuito? <span aria-hidden="true">+</span></div>
+          <div class="faq-a">
+            <p>Sim — TkLauncher é distribuído gratuitamente. Confira a licença no repositório do GitHub.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" aria-expanded="false">
+          <div class="faq-q">Possui Login Microsoft? <span aria-hidden="true">+</span></div>
+          <div class="faq-a">
+            <p>Sim — o launcher suporta autenticação via Microsoft (Xbox Live) para contas oficiais.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" aria-expanded="false">
+          <div class="faq-q">Posso jogar offline? <span aria-hidden="true">+</span></div>
+          <div class="faq-a">
+            <p>Sim, há suporte a perfis offline para jogar sem conexão.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" aria-expanded="false">
+          <div class="faq-q">Instala automaticamente? <span aria-hidden="true">+</span></div>
+          <div class="faq-a">
+            <p>Sim — downloads e instalação de arquivos necessários são automatizados para facilitar a experiência.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" aria-expanded="false">
+          <div class="faq-q">Como atualizar? <span aria-hidden="true">+</span></div>
+          <div class="faq-a">
+            <p>Use o recurso de atualizações automáticas no launcher ou baixe a última release na página de Releases.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center">
+        <div style="font-weight:700">TkLauncher</div>
+        <div class="small muted">Desenvolvido por Isaac Fernandes Moraes</div>
+      </div>
+
+      <div class="footer-links">
+        <a class="small muted" href="https://github.com/franciscoeisaac890lindo-afk/TkLauncher" target="_blank" rel="noopener">GitHub</a>
+        <a class="small muted" href="https://github.com/franciscoeisaac890lindo-afk/TkLauncher/releases" target="_blank" rel="noopener">Releases</a>
+      </div>
+
+      <div class="small muted">© 2026 TkLauncher. Todos os direitos reservados.</div>
+    </footer>
+  </main>
+
+  <button id="back-to-top" aria-label="Voltar ao topo">↑</button>
+
+  <script>
+    // Smooth functional JS for interactions: reveal on scroll, mobile menu, FAQ accordion, back to top, canvas particles.
+
+    // ====== Mobile menu toggle ======
+    (function(){
+      const ham = document.getElementById('hamburger');
+      const mobile = document.getElementById('mobileNav');
+      ham.addEventListener('click', ()=>{
+        const open = mobile.style.display === 'block';
+        mobile.style.display = open ? 'none' : 'block';
+        mobile.setAttribute('aria-hidden', open ? 'true' : 'false');
+      });
+      // Close mobile nav when click a link
+      mobile.querySelectorAll('a').forEach(a=>{
+        a.addEventListener('click', ()=>{ mobile.style.display='none'; mobile.setAttribute('aria-hidden','true')});
+      });
+    })();
+
+    // ====== Reveal on scroll using IntersectionObserver ======
+    (function(){
+      const reveals = document.querySelectorAll('.reveal');
+      const io = new IntersectionObserver((entries, obs)=>{
+        entries.forEach(entry=>{
+          if(entry.isIntersecting){
+            entry.target.classList.add('revealed');
+            obs.unobserve(entry.target);
+          }
+        });
+      }, {threshold:0.12});
+      reveals.forEach(r=>io.observe(r));
+    })();
+
+    // ====== FAQ accordion ======
+    (function(){
+      const items = document.querySelectorAll('.faq-item');
+      items.forEach(item=>{
+        const q = item.querySelector('.faq-q');
+        q.addEventListener('click', ()=>{
+          const open = item.classList.toggle('open');
+          item.setAttribute('aria-expanded', open ? 'true' : 'false');
+          // rotate symbol
+          const plus = q.querySelector('span');
+          if(open){ plus.textContent = '−'; } else { plus.textContent = '+'; }
+        });
+      });
+    })();
+
+    // ====== Back to top ======
+    (function(){
+      const btn = document.getElementById('back-to-top');
+      window.addEventListener('scroll', ()=>{
+        if(window.scrollY > 500) btn.classList.add('show'); else btn.classList.remove('show');
+      });
+      btn.addEventListener('click', ()=>window.scrollTo({top:0,behavior:'smooth'}));
+    })();
+
+    // ====== Smooth scroll for internal links (enhance for browsers) ======
+    (function(){
+      document.querySelectorAll('a[href^="#"]').forEach(a=>{
+        a.addEventListener('click', function(e){
+          const hash = this.getAttribute('href');
+          if(hash.length>1){
+            const el = document.querySelector(hash);
+            if(el){ e.preventDefault(); el.scrollIntoView({behavior:'smooth', block:'start'}); }
+          }
+        });
+      });
+    })();
+
+    // ====== Canvas particles background (lightweight) ======
+    (function(){
+      const canvas = document.getElementById('bg-canvas');
+      const ctx = canvas.getContext('2d');
+      let w=0,h=0,dpr = Math.max(1, window.devicePixelRatio || 1);
+      function resize(){
+        w = innerWidth; h = innerHeight;
+        canvas.width = Math.floor(w * dpr);
+        canvas.height = Math.floor(h * dpr);
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        ctx.scale(dpr, dpr);
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      // Particles
+      const NUM = Math.max(18, Math.floor((w*h)/90000));
+      const particles = [];
+      function rand(min,max){return Math.random()*(max-min)+min}
+      for(let i=0;i<NUM;i++){
+        particles.push({
+          x: Math.random()*w,
+          y: Math.random()*h,
+          vx: rand(-0.1,0.4),
+          vy: rand(-0.05,0.2),
+          r: rand(1.6,3.8),
+          alpha: rand(0.06,0.22),
+          hue: rand(180,280)
+        });
+      }
+
+      let t0 = performance.now();
+      function draw(now){
+        const dt = (now - t0) / 16.666; t0 = now;
+        ctx.clearRect(0,0,w,h);
+        // subtle gradient overlay
+        const g = ctx.createLinearGradient(0,0,w,h);
+        g.addColorStop(0,'rgba(11,15,19,0.25)'); g.addColorStop(1,'rgba(6,10,14,0.25)');
+        ctx.fillStyle = g; ctx.fillRect(0,0,w,h);
+
+        // draw particles
+        for(let p of particles){
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          p.vx += Math.sin((now/5000)+p.x*0.0005)*0.001;
+          if(p.x > w + 50) p.x = -50;
+          if(p.y > h + 50) p.y = -50;
+          if(p.x < -50) p.x = w + 50;
+          if(p.y < -50) p.y = h + 50;
+
+          const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r*6);
+          grd.addColorStop(0, `hsla(${p.hue},80%,70%,${p.alpha})`);
+          grd.addColorStop(0.6, `hsla(${(p.hue+40)%360},80%,60%,${p.alpha*0.12})`);
+          grd.addColorStop(1, `rgba(255,255,255,0)`);
+          ctx.beginPath();
+          ctx.fillStyle = grd;
+          ctx.arc(p.x, p.y, p.r*6, 0, Math.PI*2);
+          ctx.fill();
+        }
+
+        // subtle connecting lines
+        for(let i=0;i<particles.length;i++){
+          for(let j=i+1;j<particles.length;j++){
+            const a = particles[i], b = particles[j];
+            const dx = a.x-b.x, dy = a.y-b.y;
+            const d2 = dx*dx+dy*dy;
+            if(d2 < 16000){
+              const alpha = Math.max(0, 0.06 - d2/16000*0.06);
+              ctx.strokeStyle = `rgba(124,58,237,${alpha})`;
+              ctx.lineWidth = 0.6;
+              ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+            }
+          }
+        }
+
+        requestAnimationFrame(draw);
+      }
+      requestAnimationFrame(draw);
+    })();
+
+    // ====== Small accessibility tweaks: keyboard close for mobile nav ======
+    (function(){
+      document.addEventListener('keydown', e=>{
+        if(e.key === 'Escape'){
+          const mobile = document.getElementById('mobileNav');
+          if(mobile) { mobile.style.display='none'; mobile.setAttribute('aria-hidden','true'); }
+        }
+      });
+    })();
+
+    // ====== Small entrance animation for header brand logo (pure JS tweak) ======
+    (function(){
+      const logo = document.querySelector('.logo');
+      if(logo){
+        logo.style.transformOrigin = 'center';
+        logo.animate([{transform:'scale(0.9)'},{transform:'scale(1)'}],{duration:900, easing:'cubic-bezier(.2,.9,.2,1)'});
+      }
+    })();
+  </script>
+</body>
+</html>
